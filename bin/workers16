@@ -1,0 +1,117 @@
+#!/bin/bash
+# Launcher for federated workers16.lf Lingua Franca program.
+# Uncomment to specify to behave as close as possible to the POSIX standard.
+# set -o posix
+
+# Enable job control
+set -m
+shopt -s huponexit
+
+# Set a trap to kill all background jobs on error or control-C
+# Use two distinct traps so we can see which signal causes this.
+cleanup() {
+    if [ "$EXITED_SUCCESSFULLY" = true ] ; then
+        exit 0
+    else
+        printf "Killing federate %s.\n" ${pids[*]}
+        # The || true clause means this is not an error if kill fails.
+        kill ${pids[@]} || true
+        printf "#### Killing RTI %s.\n" ${RTI}
+        kill ${RTI} || true
+        exit 1
+    fi
+}
+
+trap 'cleanup; exit' EXIT
+
+# Create a random 48-byte text ID for this federation.
+# The likelihood of two federations having the same ID is 1/16,777,216 (1/2^24).
+FEDERATION_ID=`openssl rand -hex 24`
+echo "Federate workers16 in Federation ID '$FEDERATION_ID'"
+# Launch the federates:
+#### Host is localhostecho "#### Launching the runtime infrastructure (RTI)."
+# First, check if the RTI is on the PATH
+if ! command -v RTI &> /dev/null
+then
+    echo "RTI could not be found."
+    echo "The source code can be obtained from https://github.com/lf-lang/reactor-c/tree/main/core/federated/RTI"
+    exit 1
+fi                
+# The RTI is started first to allow proper boot-up
+# before federates will try to connect.
+# The RTI will be brought back to foreground
+# to be responsive to user inputs after all federates
+# are launched.
+RTI -i ${FEDERATION_ID} \
+                        -n 17 \
+                        -c init \
+exchanges-per-interval 10 \
+&
+# Store the PID of the RTI
+RTI=$!
+# Wait for the RTI to boot up before
+# starting federates (this could be done by waiting for a specific output
+# from the RTI, but here we use sleep)
+sleep 1
+echo "#### Launching the federate federate__client__0."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__0 -i $FEDERATION_ID &
+pids[0]=$!
+echo "#### Launching the federate federate__client__1."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__1 -i $FEDERATION_ID &
+pids[1]=$!
+echo "#### Launching the federate federate__client__2."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__2 -i $FEDERATION_ID &
+pids[2]=$!
+echo "#### Launching the federate federate__client__3."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__3 -i $FEDERATION_ID &
+pids[3]=$!
+echo "#### Launching the federate federate__client__4."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__4 -i $FEDERATION_ID &
+pids[4]=$!
+echo "#### Launching the federate federate__client__5."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__5 -i $FEDERATION_ID &
+pids[5]=$!
+echo "#### Launching the federate federate__client__6."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__6 -i $FEDERATION_ID &
+pids[6]=$!
+echo "#### Launching the federate federate__client__7."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__7 -i $FEDERATION_ID &
+pids[7]=$!
+echo "#### Launching the federate federate__client__8."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__8 -i $FEDERATION_ID &
+pids[8]=$!
+echo "#### Launching the federate federate__client__9."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__9 -i $FEDERATION_ID &
+pids[9]=$!
+echo "#### Launching the federate federate__client__10."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__10 -i $FEDERATION_ID &
+pids[10]=$!
+echo "#### Launching the federate federate__client__11."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__11 -i $FEDERATION_ID &
+pids[11]=$!
+echo "#### Launching the federate federate__client__12."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__12 -i $FEDERATION_ID &
+pids[12]=$!
+echo "#### Launching the federate federate__client__13."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__13 -i $FEDERATION_ID &
+pids[13]=$!
+echo "#### Launching the federate federate__client__14."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__14 -i $FEDERATION_ID &
+pids[14]=$!
+echo "#### Launching the federate federate__client__15."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__client__15 -i $FEDERATION_ID &
+pids[15]=$!
+echo "#### Launching the federate federate__server."
+/mnt/c/Users/jacky/Desktop/federated/fed-gen/workers16/bin/federate__server -i $FEDERATION_ID &
+pids[16]=$!
+echo "#### Bringing the RTI back to foreground so it can receive Control-C."
+fg %1
+echo "RTI has exited. Wait for federates to exit."
+# Wait for launched processes to finish.
+# The errors are handled separately via trap.
+for pid in "${pids[@]}"
+do
+    wait $pid || exit $?
+done
+echo "All done."
+EXITED_SUCCESSFULLY=true
